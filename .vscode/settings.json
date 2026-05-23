@@ -1,9 +1,8 @@
 {
     "files.autoSave": "onFocusChange",
     "editor.fontSize": 15,
-    "editor.fontFamily": "'Maple Mono NF CN', 'Maple Mono NF CN', 'Maple Mono NF CN'",
+    "editor.fontFamily": "Maple Mono NF CN",
     "editor.wordWrap": "on",
-    "terminal.integrated.fontFamily": "Maple Mono NF CN",
     "cmake.configureOnOpen": true,
     //"C_Cpp.intelliSenseEngine": "disabled",
     "cmake.debugConfig": {
