@@ -5,6 +5,7 @@
 
 #ifdef OS_MINI_WINDOWS
 #include <Windows.h>
+static HANDLE hOut = nullptr;
 #endif
 
 #ifdef OS_MINI_WINDOWS
@@ -30,7 +31,10 @@ protected:
         std::vector<wchar_t> buffer(wideLen);
         MultiByteToWideChar(CP_UTF8, 0, s, static_cast<int>(n), buffer.data(), wideLen);
 
-        HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (hOut == nullptr) {
+            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        }
+
         DWORD written;
         WriteConsoleW(hOut, buffer.data(), wideLen, &written, nullptr);
 
