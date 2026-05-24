@@ -1,5 +1,6 @@
 #include "miniUtil.h"
 
+#include <algorithm>
 #include <iostream>
 #include <vector>
 
@@ -32,7 +33,7 @@ protected:
         MultiByteToWideChar(CP_UTF8, 0, s, static_cast<int>(n), buffer.data(), wideLen);
 
         if (hOut == nullptr) {
-            HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+            hOut = GetStdHandle(STD_OUTPUT_HANDLE);
         }
 
         DWORD written;
@@ -49,6 +50,19 @@ miniUtil::miniUtil()
 
 miniUtil::~miniUtil()
 {
+}
+
+std::string miniUtil::Upper(const std::string& str)
+{
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::toupper(c); });
+    return result;
+}
+std::string miniUtil::Lower(const std::string& str)
+{
+    std::string result = str;
+    std::transform(result.begin(), result.end(), result.begin(), [](unsigned char c) { return std::tolower(c); });
+    return result;
 }
 
 void miniUtil::setU8Output()
