@@ -1,6 +1,7 @@
 #include "miniUtil.h"
 
 #include <algorithm>
+#include <cctype>
 #include <iostream>
 #include <vector>
 
