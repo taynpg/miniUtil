@@ -119,6 +119,14 @@ std::pair<miniErr, std::string> miniUtil::U82Ansi(const std::string& str)
 #endif
 }
 
+std::pair<miniErr, std::string> miniUtil::AutoU8(const std::string& str)
+{
+    if (!IsU8(str)) {
+        return Ansi2U8(str);
+    }
+    return {"", str};
+}
+
 std::pair<miniErr, std::string> miniUtil::Ansi2U8(const std::string& str)
 {
 #ifdef OS_MINI_WINDOWS
@@ -141,4 +149,69 @@ std::pair<miniErr, std::string> miniUtil::Ansi2U8(const std::string& str)
 #else
     return {"", str};
 #endif
+}
+
+bool miniUtil::IsU8(const std::string& str)
+{
+    const uint8_t* bytes = reinterpret_cast<const uint8_t*>(str.data());
+    size_t len = str.size();
+
+    for (size_t i = 0; i < len;) {
+        uint8_t b = bytes[i];
+
+        // 1-byte: 0xxxxxxx
+        if ((b & 0x80) == 0x00) {
+            ++i;
+            continue;
+        }
+        // 2-byte: 110xxxxx 10xxxxxx
+        else if ((b & 0xE0) == 0xC0) {
+            if (i + 1 >= len) {
+                return false;
+            }
+            if ((bytes[i + 1] & 0xC0) != 0x80) {
+                return false;
+            }
+            i += 2;
+        }
+        // 3-byte: 1110xxxx 10xxxxxx 10xxxxxx
+        else if ((b & 0xF0) == 0xE0) {
+            if (i + 2 >= len) {
+                return false;
+            }
+            if ((bytes[i + 1] & 0xC0) != 0x80) {
+                return false;
+            }
+            if ((bytes[i + 2] & 0xC0) != 0x80) {
+                return false;
+            }
+            if (b == 0xE0 && bytes[i + 1] < 0xA0) {
+                return false;
+            }
+            i += 3;
+        }
+        // 4-byte: 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+        else if ((b & 0xF8) == 0xF0) {
+            if (i + 3 >= len) {
+                return false;
+            }
+            if ((bytes[i + 1] & 0xC0) != 0x80) {
+                return false;
+            }
+            if ((bytes[i + 2] & 0xC0) != 0x80) {
+                return false;
+            }
+            if ((bytes[i + 3] & 0xC0) != 0x80) {
+                return false;
+            }
+            if (b == 0xF0 && bytes[i + 1] < 0x90) {
+                return false;
+            }
+            i += 4;
+        } else {
+            return false;
+        }
+    }
+
+    return true;
 }

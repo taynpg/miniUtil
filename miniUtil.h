@@ -8,7 +8,7 @@
 /*
  * 最基本的辅助工具，无需额外依赖。
  *
- * version: 0.3.1
+ * version: 0.4.0
  *
  * 所有 std::pair 返回值的，统一，第一个值是错误字符串，为空正常。
  */
@@ -30,13 +30,14 @@ public:
     static void setU8Output();
     static std::vector<std::string> split(const std::string& str, const std::string& delim);
     static std::pair<miniErr, std::string> U82Ansi(const std::string& str);
+    static std::pair<miniErr, std::string> AutoU8(const std::string& str);
     static std::pair<miniErr, std::string> Ansi2U8(const std::string& str);
+    static bool IsU8(const std::string& str);
     static std::string Upper(const std::string& str);
     static std::string Lower(const std::string& str);
 };
 
-template<typename T>
-class miniSingleton
+template <typename T> class miniSingleton
 {
 public:
     miniSingleton(const miniSingleton&) = delete;
@@ -48,7 +49,6 @@ public:
         static T instance;
         return instance;
     }
-
 
 private:
     miniSingleton() = default;
