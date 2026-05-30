@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
+#include <mutex>
 #include <vector>
 
 #ifdef OS_MINI_WINDOWS
@@ -214,4 +215,56 @@ bool miniUtil::IsU8(const std::string& str)
     }
 
     return true;
+}
+
+void miniBuffer::Clear()
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    buffer_.clear();
+}
+
+size_t miniBuffer::Size() const
+{
+    return buffer_.size();
+}
+
+void miniBuffer::RemoveOf(int start, int size)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    if (start >= buffer_.size()) {
+        return;
+    }
+
+    size_t pend = start + size;
+    if (pend > buffer_.size()) {
+        pend = buffer_.size();
+    }
+    buffer_.erase(buffer_.begin() + start, buffer_.begin() + pend);
+}
+
+void miniBuffer::Append(const char* data, size_t size)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    std::copy_n(data, size, std::back_inserter(buffer_));
+}
+
+int miniBuffer::IndexOf(const char* data, size_t size, int start)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    auto it = std::search(buffer_.begin() + start, buffer_.end(), data, data + size);
+    if (it == buffer_.end()) {
+        return -1;
+    }
+    auto dis = std::distance(buffer_.begin(), it);
+    return static_cast<int>(dis);
+}
+
+int miniBuffer::IndexOf(const std::string& str, int start)
+{
+    return IndexOf(str.c_str(), str.size(), start);
+}
+
+const std::vector<char>& miniBuffer::GetBuffer() const
+{
+    return buffer_;
 }

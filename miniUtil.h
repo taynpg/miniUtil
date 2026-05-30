@@ -1,6 +1,8 @@
 #ifndef MINI_UTIL_H
 #define MINI_UTIL_H
 
+#include <cstdint>
+#include <mutex>
 #include <string>
 #include <utility>
 #include <vector>
@@ -8,7 +10,7 @@
 /*
  * 最基本的辅助工具，无需额外依赖。
  *
- * version: 0.4.0
+ * version: 0.5.0
  *
  * 所有 std::pair 返回值的，统一，第一个值是错误字符串，为空正常。
  */
@@ -53,6 +55,29 @@ public:
 private:
     miniSingleton() = default;
     ~miniSingleton() = default;
+};
+
+class miniBuffer
+{
+public:
+    miniBuffer() = default;
+    ~miniBuffer() = default;
+
+public:
+    void Clear();
+    size_t Size() const;
+
+    void RemoveOf(int start, int size);
+    void Append(const char* data, size_t size);
+
+    int IndexOf(const char* data, size_t size, int start = 0);
+    int IndexOf(const std::string& str, int start = 0);
+
+    const std::vector<char>& GetBuffer() const;
+
+private:
+    std::mutex mutex_;
+    std::vector<char> buffer_;
 };
 
 #endif   // MINI_UTIL_H
