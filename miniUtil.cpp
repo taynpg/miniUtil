@@ -2,14 +2,18 @@
 
 #include <algorithm>
 #include <cctype>
+#include <filesystem>
 #include <iostream>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #ifdef OS_MINI_WINDOWS
 #include <Windows.h>
 static HANDLE hOut = nullptr;
 #endif
+
+namespace fs = std::filesystem;
 
 #ifdef OS_MINI_WINDOWS
 class Utf8ConsoleBuf : public std::streambuf
@@ -44,6 +48,31 @@ protected:
         return n;
     }
 };
+
+std::string W2U8(const std::wstring& wstr)
+{
+    if (wstr.empty()) {
+        return {};
+    }
+
+    int utf8Size = ::WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), nullptr, 0, nullptr, nullptr);
+    if (utf8Size == 0) {
+        return {};
+    }
+
+    std::string result(utf8Size, 0);
+
+    int converted =
+        ::WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), &result[0], utf8Size, nullptr, nullptr);
+
+    if (converted == 0) {
+        return {};
+    }
+
+    result.resize(converted);
+    return result;
+}
+
 #endif
 
 miniUtil::miniUtil()
@@ -267,4 +296,76 @@ int miniBuffer::IndexOf(const std::string& str, int start)
 const std::vector<char>& miniBuffer::GetBuffer() const
 {
     return buffer_;
+}
+
+std::pair<miniErr, std::string> miniPath::GetExePath()
+{
+#if defined(OS_MINI_WINDOWS)
+    wchar_t exePath[MAX_PATH] = {0};
+    DWORD length = GetModuleFileNameW(nullptr, exePath, MAX_PATH);
+    if (length == 0) {
+        return {"Error1", ""};
+    }
+    return {"", W2U8(exePath)};
+#elif defined(OS_MINI_MACOS)
+    uint32_t size{};
+    _NSGetExecutablePath(nullptr, &size);
+    std::vector<char> buffer(size);
+    auto r = _NSGetExecutablePath(buffer.data(), &size);
+    if (r != 0) {
+        return {"Error1", ""};
+    }
+    return {"", buffer.data()};
+#else
+    char exePath[PATH_MAX] = {0};
+    ssize_t length = readlink("/proc/self/exe", exePath, PATH_MAX - 1);
+    if (length == -1) {
+        return {"Error1", ""};
+    }
+    exePath[length] = '\0';
+    return {"", exePath};
+#endif
+}
+
+std::pair<miniErr, std::string> miniPath::GetExeDir()
+{
+    auto r = GetExePath();
+    if (!r.first.empty()) {
+        return r;
+    }
+    fs::path p(r.second);
+    return {"", p.parent_path().string()};
+}
+
+std::pair<miniErr, std::string> miniPath::GetExeName()
+{
+    auto r = GetExePath();
+    if (!r.first.empty()) {
+        return r;
+    }
+    fs::path p(r.second);
+    return {"", p.filename().string()};
+}
+
+std::pair<miniErr, std::string> miniPath::GetHome()
+{
+#if defined(OS_MINI_WINDOWS)
+    std::wstring val;
+    DWORD size = GetEnvironmentVariableW(L"USERPROFILE", nullptr, 0);
+    if (size == 0) {
+        return {"Error1", ""};
+    }
+    val.resize(size);
+    if (GetEnvironmentVariableW(L"USERPROFILE", &val[0], size) == 0) {
+        return {"Error2", ""};
+    }
+    val.resize(size - 1);
+    return {"", W2U8(val)};
+#else
+    char* homedir = getenv("HOME");
+    if (homedir == nullptr) {
+        return {"Error1", ""};
+    }
+    return {"", homedir};
+#endif
 }

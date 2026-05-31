@@ -9,18 +9,21 @@
 
 /*
  * 最基本的辅助工具，无需额外依赖。
+ * 运行环境: UTF-8
  *
- * version: 0.5.0
+ * version: 0.6.0
  *
  * 所有 std::pair 返回值的，统一，第一个值是错误字符串，为空正常。
  */
-
-#ifdef _WIN32
+#if defined(_WIN32) || defined(_WIN64)
 #define OS_MINI_WINDOWS
+#elif defined(__clang__) && defined(__APPLE__)
+#define OS_MINI_MACOS
 #else
 #define OS_MINI_UNIXLIKE
 #endif
 
+// ========================== miniUtil ==========================
 using miniErr = std::string;
 class miniUtil
 {
@@ -57,6 +60,7 @@ private:
     ~miniSingleton() = default;
 };
 
+// ========================== miniBuffer ==========================
 class miniBuffer
 {
 public:
@@ -78,6 +82,20 @@ public:
 private:
     std::mutex mutex_;
     std::vector<char> buffer_;
+};
+
+// ========================== miniPath ==========================
+class miniPath
+{
+public:
+    miniPath() = default;
+    ~miniPath() = default;
+
+public:
+    static std::pair<miniErr, std::string> GetExePath();
+    static std::pair<miniErr, std::string> GetExeDir();
+    static std::pair<miniErr, std::string> GetExeName();
+    static std::pair<miniErr, std::string> GetHome();
 };
 
 #endif   // MINI_UTIL_H
