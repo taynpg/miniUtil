@@ -369,3 +369,45 @@ std::pair<miniErr, std::string> miniPath::GetHome()
     return {"", homedir};
 #endif
 }
+
+std::string miniPath::Join(const std::string& path, const std::string& f)
+{
+    fs::path p(path);
+    p.append(f);
+    p = p.lexically_normal();
+    return p.string();
+}
+
+std::string miniPath::Join(const std::string& path, const std::string& f1, const std::string& f2)
+{
+    fs::path p(path);
+    p.append(f1);
+    p.append(f2);
+    p = p.lexically_normal();
+    return p.string();
+}
+
+std::pair<miniErr, std::string> miniPath::CreateDir(const std::string& path)
+{
+    try {
+        fs::create_directories(path);
+    } catch (const fs::filesystem_error& e) {
+        return {"Error1", e.what()};
+    }
+    return {"", path};
+}
+
+bool miniPath::IsDir(const std::string& path)
+{
+    return fs::is_directory(path);
+}
+
+bool miniPath::IsFile(const std::string& path)
+{
+    return fs::is_regular_file(path);
+}
+
+bool miniPath::IsExist(const std::string& path)
+{
+    return fs::exists(path);
+}

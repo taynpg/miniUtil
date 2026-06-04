@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(miniUtil VERSION 0.6.0 LANGUAGES CXX)
+project(miniUtil VERSION 0.7.0 LANGUAGES CXX)
 
 if (MSVC)
     add_compile_options(/utf-8)
