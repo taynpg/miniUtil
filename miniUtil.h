@@ -11,7 +11,7 @@
  * 最基本的辅助工具，无需额外依赖。
  * 运行环境: UTF-8
  *
- * version: 0.7.0
+ * version: 0.8.2
  *
  * 所有 std::pair 返回值的，统一，第一个值是错误字符串，为空正常。
  */
@@ -92,6 +92,18 @@ public:
     ~miniPath() = default;
 
 public:
+    enum class miniFileType {
+        mTypeDir,
+        mTypeFile,
+    };
+    struct miniFileMeta {
+        std::string dir;
+        miniFileType fileType;
+        std::string fileName;
+        std::uint64_t fileSize;
+        std::uint64_t lastModified;
+    };
+public:
     static std::pair<miniErr, std::string> GetExePath();
     static std::pair<miniErr, std::string> GetExeDir();
     static std::pair<miniErr, std::string> GetExeName();
@@ -101,7 +113,9 @@ public:
     static bool IsDir(const std::string& path);
     static bool IsFile(const std::string& path);
     static bool IsExist(const std::string& path);
+    static bool GetList(const std::string& path, std::vector<miniFileMeta>& fileList);
 
+    static std::string cdUp(const std::string& path);
     static std::string Join(const std::string& path, const std::string& f);
     static std::string Join(const std::string& path, const std::string& f1, const std::string& f2);
 };

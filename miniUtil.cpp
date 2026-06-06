@@ -73,6 +73,25 @@ std::string W2U8(const std::wstring& wstr)
     return result;
 }
 
+std::wstring U8ToW(const std::string& str)
+{
+    if (str.empty()) {
+        return {};
+    }
+    int wideSize = ::MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), nullptr, 0);
+    if (wideSize == 0) {
+        return {};
+    }
+    std::wstring result(wideSize, 0);
+    int converted = ::MultiByteToWideChar(CP_UTF8, 0, str.data(), static_cast<int>(str.size()), &result[0], wideSize);
+
+    if (converted == 0) {
+        return {};
+    }
+    result.resize(converted);
+    return result;
+}
+
 #endif
 
 miniUtil::miniUtil()
@@ -410,4 +429,66 @@ bool miniPath::IsFile(const std::string& path)
 bool miniPath::IsExist(const std::string& path)
 {
     return fs::exists(path);
+}
+
+bool miniPath::GetList(const std::string& path, std::vector<miniFileMeta>& fileList)
+{
+    if (!IsDir(path) || !IsExist(path)) {
+        return false;
+    }
+    fileList.clear();
+
+    auto GetLastModified = [](const std::string& path) -> uint64_t {
+        auto ftime = fs::last_write_time(path);
+        auto sctime = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+        return std::chrono::duration_cast<std::chrono::milliseconds>(sctime.time_since_epoch()).count();
+    };
+
+    try {
+        for (const auto& entry : fs::directory_iterator(path)) {
+
+            auto filename = entry.path().filename().string();
+            if (filename == "." || filename == "..") {
+                continue;
+            }
+#if defined(OS_MINI_WINDOWS)
+            DWORD attrs = GetFileAttributesW(U8ToW(entry.path().string()).c_str());
+            if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & (FILE_ATTRIBUTE_HIDDEN | FILE_ATTRIBUTE_SYSTEM))) {
+                continue;
+            }
+#else
+#endif
+
+            if (filename.find(">") != std::string::npos || filename.find("$") != std::string::npos) {
+                continue;
+            }
+
+            miniFileMeta meta;
+            meta.dir = path;
+            if (entry.is_regular_file()) {
+                meta.fileType = miniFileType::mTypeFile;
+                meta.fileName = entry.path().filename().string();
+                meta.fileSize = fs::file_size(entry.path());
+                meta.lastModified = GetLastModified(entry.path().string());
+                fileList.push_back(meta);
+            } else if (entry.is_directory()) {
+                meta.fileType = miniFileType::mTypeDir;
+                meta.fileName = entry.path().filename().string();
+                meta.fileSize = 0;
+                meta.lastModified = GetLastModified(entry.path().string());
+                fileList.push_back(meta);
+            }
+        }
+    } catch (const fs::filesystem_error& e) {
+        return false;
+    }
+    return true;
+}
+
+std::string miniPath::cdUp(const std::string& path)
+{
+    fs::path p(path);
+    p = p.parent_path();
+    p = p.lexically_normal();
+    return p.string();
 }
